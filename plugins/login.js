@@ -7,21 +7,20 @@ const PROFILE_TOKEN = 'http://iiif.io/api/auth/1/token';
 const PROFILE_LOGOUT = 'http://iiif.io/api/auth/1/logout';
 
 let viewer = null;   
-let messages = {}
+let messages = {};
 
-var dataServices = "";
+let dataServices = "";
 
 
 // Mirador plugin
-var Login = {
+let Login = {
   /* initializes the plugin */
   init: function(){
-    i18next.on('initialized', function(){
-      this.addLocalesToViewer();
-    }.bind(this));
+    // i18next.on('initialized', function(){
+      // this.addLocalesToViewer();
+    // }.bind(this));
     this.injectWorkspaceEventHandler();
     console.log("Initializing Auth...");
-    Mirador.BookView.prototype.currentImage = Mirador.ImageView.prototype.currentImage = this.currentImage;
     // Overwrite toggleFocus to add AuthService lookup
     Mirador.Window.prototype.toggleFocus = this.toggleFocus;
   },
@@ -29,10 +28,10 @@ var Login = {
 
   /* injects the needed workspace event handler */
   injectWorkspaceEventHandler: function(){
-    var this_ = this;
-    var origFunc = Mirador.Workspace.prototype.bindEvents;
+    let this_ = this;
+    let origFunc = Mirador.Workspace.prototype.bindEvents;
     Mirador.Workspace.prototype.bindEvents = function(){
-      var workspace = this;
+      let workspace = this;
       
       this.eventEmitter.subscribe('windowUpdated', function(event, data){
         if(!data.loadedManifest){
@@ -42,19 +41,18 @@ var Login = {
 
         let info = data.authService["@id"] + "/info.json";
 
-        var dataService = $.ajax({
+        let dataService = $.ajax({
               url: info,
-              dataType: 'json',
-              // async: false
+              dataType: 'json'
             })
             .done(function(data) {
               dataServices = JSON.stringify(data.service);
-              // console.log(dataServices);
               console.log("info.json found");
               authChain();
             })
             .fail(function(data) {
               console.log("Data not found in " + JSON.stringify(data.service));
+              console.log("Info.json not loaded.  Auth unable to initialize.");
             });
 
         function loadInfo(imageServiceId, token) {
@@ -79,24 +77,15 @@ var Login = {
                   reject(e.message);
               }
             };
-            // console.log(request);
             request.onerror = function() {
                 reject(this.status + " " + this.statusText);
             };        
             request.send();
-            // test to see if setRequestHeader is working
-            // request.onreadystatechange = function() {
-            //   if(this.readyState == this.HEADERS_RECEIVED) {
-            //     console.log("Response headers: " + request.getAllResponseHeaders());
-            //   }
-            // }
           });
         }
 
         function openContentProviderWindow(service){
-          // console.log(service);
           let cookieServiceUrl = service + "?origin=" + getOrigin();
-          // let cookieServiceUrl = "http://media.getty.edu/auth/login?origin=" + getOrigin(); // forced way to generate cookie, change to https when that is implemented
           console.log("Opening content provider window: " + cookieServiceUrl);
           return window.open(cookieServiceUrl);
         }
@@ -105,15 +94,14 @@ var Login = {
           return new Promise((resolve) => {
               // What happens here is forever a mystery to a client application.
               // It can but wait.
-              var poll = window.setInterval(() => {
+              let poll = window.setInterval(() => {
                   // contentProviderWindow.close(); // close automatically for our purposes
                   if(contentProviderWindow.closed){
-                      console.log("cookie service window is now closed")
+                      console.log("cookie service window is now closed");
                       window.clearInterval(poll);
                       resolve();
                   }
               }, 500);
-
           });
         }
 
@@ -123,6 +111,7 @@ var Login = {
           }
           return [];
         }
+
         function first(objOrArray, predicate) {
           let arr = asArray(objOrArray);
           let filtered = arr.filter(predicate);
@@ -131,6 +120,7 @@ var Login = {
           }
           return null;
         }
+
         function getOrigin(url) {
           let urlHolder = window.location;
           if(url){
@@ -140,7 +130,6 @@ var Login = {
           return urlHolder.protocol + "//" + urlHolder.hostname + (urlHolder.port ? ':' + urlHolder.port: '');
         }
         
-
         async function loadImage(imageServiceId, token){
           let infoResponse;
           try{
@@ -154,19 +143,18 @@ var Login = {
               if(infoResponse.info["@id"] != imageServiceId){
                   console.log("The requested imageService is " + imageServiceId);
                   console.log("The @id returned is " + infoResponse.info["@id"]);
-                  console.log("This image is most likely the degraded version of the one you asked for")
+                  console.log("This image is most likely the degraded version of the one you asked for");
                   infoResponse.degraded = true;
               }
           }
           return infoResponse;
         }
 
-
         async function attemptWithToken(authService, imageService) {
           console.log("Attempting token interaction for " + data.authServiceID);
           // let tokenService = first(authService.service, s => s.profile === PROFILE_TOKEN);
           // console.log(authService);
-          let tokenService1 = asArray(authService).some(s => s.service === PROFILE_TOKEN);
+          // let tokenService1 = asArray(authService).some(s => s.service === PROFILE_TOKEN);
           let tokenService = JSON.parse(authService).filter(s => s.service);
           let tokenSort = asArray(tokenService).some(s => s.service[0].profile === PROFILE_TOKEN);
           // console.log(tokenSort);
@@ -267,10 +255,10 @@ var Login = {
         }
 
         function* MessageIdGenerator(){
-          var messageId = 1; // don't start at 0, it's falsey
+          let messageId = 1; // don't start at 0, it's falsey
           while(true) yield messageId++;
         }
-        var messageIds = MessageIdGenerator();
+        let messageIds = MessageIdGenerator();
 
         function openTokenService(tokenService) {
           // use a Promise across a postMessage call
@@ -283,7 +271,7 @@ var Login = {
                 "reject": reject,
                 "serviceOrigin": serviceOrigin
             };
-            var tokenUrl = tokenService + "?messageId=" + messageId + "&origin=" + getOrigin(); 
+            let tokenUrl = tokenService + "?messageId=" + messageId + "&origin=" + getOrigin(); 
             // console.log(tokenUrl);
             document.getElementById("commsFrame").src = tokenUrl;
 
@@ -309,7 +297,7 @@ var Login = {
             let rejectValue = "postMessage event received but rejected.";
             if(event.data.hasOwnProperty("messageId")){
                 console.log("recieved message with id " + event.data.messageId);
-                var message = messages[event.data.messageId];
+                let message = messages[event.data.messageId];
                 if(message && event.origin == message.serviceOrigin)
                 {
                     // Any message with a messageId is a success
@@ -321,11 +309,7 @@ var Login = {
             }
         }
 
-        //
-
-
         function renderImage(info){
-          
           // Mirador.BookView.prototype.updateImage(data.canvasID);
           Login.currentImage();
           console.log("Re-load " + info["@id"]);
@@ -360,7 +344,7 @@ var Login = {
 
   /* adds the locales to the internationalization module of the viewer */
   addLocalesToViewer: function(){
-    for(var language in this.locales){
+    for(let language in this.locales){
       i18next.addResources(
         language, 'translation',
         this.locales[language]
@@ -369,7 +353,7 @@ var Login = {
   },
 
   handleSetBounds: function() {
-    var _this = this;
+    let _this = this;
     this.osdOptions.osdBounds = this.osd.viewport.getBounds(true);
     _this.eventEmitter.publish("imageBoundsUpdated", {
       id: _this.windowId,
@@ -384,7 +368,7 @@ var Login = {
 
   // Overwrite of toggleFocus of Mirador.Window.prototype.toggleFocus to add authService ids & profiles for authChain
   toggleFocus: function(focusState, imageMode) {
-    var _this = this;
+    let _this = this;
 
     this.viewType = focusState;
     if (imageMode && jQuery.inArray(imageMode, this.imageModes) > -1) {
