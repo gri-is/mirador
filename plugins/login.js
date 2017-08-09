@@ -337,7 +337,7 @@ let Login = {
   currentImage: function(){
     Mirador.Workspace.prototype.bindEvents = function(){
       this.eventEmitter.publish(
-        'SET_CURRENT_CANVAS_ID.' + this.windowId, this.imagesList[0]['@id']
+        'SET_CURRENT_CANVAS_ID.' + this.windowId, this.imagesList[this.currentImgIndex]['@id']
       );
     }
   },
