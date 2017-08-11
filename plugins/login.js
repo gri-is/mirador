@@ -46,7 +46,7 @@ let Login = {
               dataType: 'json'
             })
             .done(function(data) {
-              dataServices = JSON.stringify(data.service);
+              dataServices = data.service;
               console.log("info.json found");
               authChain();
             })
@@ -85,7 +85,7 @@ let Login = {
         }
 
         function openContentProviderWindow(service){
-          let cookieServiceUrl = service + "?origin=" + getOrigin();
+          let cookieServiceUrl = service["@id"] + "?origin=" + getOrigin();
           console.log("Opening content provider window: " + cookieServiceUrl);
           return window.open(cookieServiceUrl);
         }
@@ -95,7 +95,6 @@ let Login = {
               // What happens here is forever a mystery to a client application.
               // It can but wait.
               let poll = window.setInterval(() => {
-                  // contentProviderWindow.close(); // close automatically for our purposes
                   if(contentProviderWindow.closed){
                       console.log("cookie service window is now closed");
                       window.clearInterval(poll);
@@ -151,17 +150,11 @@ let Login = {
         }
 
         async function attemptWithToken(authService, imageService) {
-          console.log("Attempting token interaction for " + data.authServiceID);
-          // let tokenService = first(authService.service, s => s.profile === PROFILE_TOKEN);
-          // console.log(authService);
-          // let tokenService1 = asArray(authService).some(s => s.service === PROFILE_TOKEN);
-          let tokenService = JSON.parse(authService).filter(s => s.service);
-          let tokenSort = asArray(tokenService).some(s => s.service[0].profile === PROFILE_TOKEN);
-          // console.log(tokenSort);
-          if (tokenSort) {
-            let tokenId = JSON.parse(authService).map(s => s.service[0]["@id"]);
-            console.log("Token service found: " + tokenId[0]);
-            let tokenMessage = await openTokenService(tokenId[0]); 
+          console.log("Attempting token interaction for " + authService["@id"]);
+          let tokenService = first(authService.service, s => s.profile === PROFILE_TOKEN);
+          if (tokenService) {
+            console.log("Token service found: " + tokenService["@id"]);
+            let tokenMessage = await openTokenService(tokenService["@id"]); 
             if(tokenMessage && tokenMessage.accessToken) {
               let withTokenInfoResponse = await loadImage(imageService, tokenMessage.accessToken); 
               console.log("Info request with token resulted in " + withTokenInfoResponse.status);
@@ -184,35 +177,28 @@ let Login = {
           console.log("Services found in: " + info);
 
           let services = asArray(dataServices);
-          
           let lastAttempted = null;
           let requestedId = data.authServiceID;
-          let serviceToLoad = JSON.parse(dataServices);
 
           console.log("Looking for external pattern...");
-          let serviceToTry = asArray(serviceToLoad).some(s => s.profile === PROFILE_EXTERNAL);
+          let serviceToTry = first(services, s => s.profile === PROFILE_EXTERNAL);
           if (serviceToTry) {
             console.log("External Pattern found");
-            lastAttempted = asArray(serviceToLoad).filter(s => s.profile === PROFILE_EXTERNAL);
-            // let tokenId = JSON.parse(dataServices).map(s => s["@id"]);
-            // tokenId = tokenId.toString().replace(/,+$/, "");
-            let success = await attemptWithToken(dataServices, requestedId);
+            lastAttempted = serviceToTry;
+            let success = await attemptWithToken(serviceToTry, requestedId);
             if (success) return;
           }
           
 
           console.log("Looking for kiosk pattern...");
-          serviceToTry = asArray(serviceToLoad).some(s => s.profile === PROFILE_KIOSK);
+          serviceToTry = first(services, s => s.profile === PROFILE_KIOSK);
           if (serviceToTry) {
             console.log("Kiosk Pattern found");
-            lastAttempted = asArray(serviceToLoad).filter(s => s.profile === PROFILE_EXTERNAL);
-            let tokenId = JSON.parse(dataServices).map(s => s["@id"]);
-            tokenId = tokenId.toString().replace(/,+$/, "");
-
-            let kioskWindow = openContentProviderWindow(tokenId);
+            lastAttempted = serviceToTry;
+            let kioskWindow = openContentProviderWindow(serviceToTry);
             if (kioskWindow) {
               await userInteractionWithContentProvider(kioskWindow);
-              let success = await attemptWithToken(dataServices, requestedId);
+              let success = await attemptWithToken(serviceToTry, requestedId);
               if (success) return;
             } else {
               alert("Could not open kiosk window, please enable pop-ups.");
@@ -220,33 +206,27 @@ let Login = {
           }
 
           console.log("Looking for clickthrough pattern...");
-          serviceToTry = asArray(serviceToLoad).some(s => s.profile === PROFILE_CLICKTHROUGH);
+          serviceToTry = first(services, s => s.profile === PROFILE_CLICKTHROUGH);
           if (serviceToTry) {
             console.log("Clickthrough Pattern found");
-            lastAttempted = asArray(serviceToLoad).filter(s => s.profile === PROFILE_EXTERNAL);
-            let tokenId = JSON.parse(dataServices).map(s => s["@id"]);
-            tokenId = tokenId.toString().replace(/,+$/, "");
-
-            let contentProviderWindow = openContentProviderWindow(tokenId);
+            lastAttempted = serviceToTry;
+            let contentProviderWindow = openContentProviderWindow(serviceToTry);
             if (contentProviderWindow) {
               await userInteractionWithContentProvider(contentProviderWindow); 
-              let success = await attemptWithToken(dataServices, requestedId);
+              let success = await attemptWithToken(serviceToTry, requestedId);
               if (success) return;
             }
           }
 
           console.log("Looking for login pattern...");
-          serviceToTry = asArray(serviceToLoad).some(s => s.profile === PROFILE_LOGIN);
+          serviceToTry = first(services, s => s.profile === PROFILE_LOGIN);
           if (serviceToTry) {
             console.log("Login Pattern found");
-            lastAttempted = asArray(serviceToLoad).filter(s => s.profile === PROFILE_EXTERNAL);
-            let tokenId = JSON.parse(dataServices).map(s => s["@id"]);
-            tokenId = tokenId.toString().replace(/,+$/, "");
-            
-            let contentProviderWindow = openContentProviderWindow(tokenId);
+            lastAttempted = serviceToTry;        
+            let contentProviderWindow = openContentProviderWindow(serviceToTry);
             if (contentProviderWindow) {
               await userInteractionWithContentProvider(contentProviderWindow); 
-              let success = await attemptWithToken(dataServices, requestedId);
+              let success = await attemptWithToken(serviceToTry, requestedId);
               if (success) return;
             }
           }
