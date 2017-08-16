@@ -321,5 +321,21 @@ let Login = {
 }
 
 $(document).ready(function(){
+  // code from authChain to generate cookie, temp solution to load cookie before images
+  function openContentProviderWindow(service){
+    let cookieServiceUrl = service + "?origin=" + getOrigin();
+    console.log("Opening content provider window: " + cookieServiceUrl);
+    return window.open(cookieServiceUrl);
+  }
+  function getOrigin(url) {
+    let urlHolder = window.location;
+    if(url){
+        urlHolder = document.createElement('a');
+        urlHolder.href = url;
+    }
+    return urlHolder.protocol + "//" + urlHolder.hostname + (urlHolder.port ? ':' + urlHolder.port: '');
+  }
+  openContentProviderWindow("http://media.getty.edu/auth/login"); 
+
   Login.init();
 });
