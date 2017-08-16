@@ -16,30 +16,27 @@ let dataServices = "";
 let Login = {
   /* initializes the plugin */
   init: function(){
-    // i18next.on('initialized', function(){
-      // this.addLocalesToViewer();
-    // }.bind(this));
     this.injectWorkspaceEventHandler();
     console.log("Initializing Auth...");
-    // Overwrite toggleFocus to add AuthService lookup
-    Mirador.Window.prototype.toggleFocus = this.toggleFocus;
   },
-
 
   /* injects the needed workspace event handler */
   injectWorkspaceEventHandler: function(){
     let this_ = this;
+
     let origFunc = Mirador.Workspace.prototype.bindEvents;
+
     Mirador.Workspace.prototype.bindEvents = function(){
       let workspace = this;
-      
       this.eventEmitter.subscribe('windowUpdated', function(event, data){
         if(!data.loadedManifest){
           return;
         }
 
-
-        let info = data.authService["@id"] + "/info.json";
+        // let info = data.authService["@id"] + "/info.json";
+        let info = data.canvases[data.canvasID].images[0].tileSource;
+        let reqId = data.canvases[data.canvasID].images[0].tileSource;
+        let requestedId = reqId.replace('/info.json', '');
 
         let dataService = $.ajax({
               url: info,
@@ -170,7 +167,7 @@ let Login = {
         }
 
         async function authChain() {
-          if(!data.authService) {
+          if(!dataServices) {
             alert("No services found!");
             return;
           }
@@ -178,7 +175,7 @@ let Login = {
 
           let services = asArray(dataServices);
           let lastAttempted = null;
-          let requestedId = data.authServiceID;
+          // console.log(requestedId);
 
           console.log("Looking for external pattern...");
           let serviceToTry = first(services, s => s.profile === PROFILE_EXTERNAL);
@@ -244,7 +241,7 @@ let Login = {
           // use a Promise across a postMessage call
           return new Promise((resolve, reject) => {
             // if necessary, the client can decide not to trust this origin
-            const serviceOrigin = getOrigin(data.authServiceID);
+            const serviceOrigin = getOrigin(requestedId);
             const messageId = messageIds.next().value;
             messages[messageId] = { 
                 "resolve": resolve,
@@ -321,63 +318,6 @@ let Login = {
       );
     }
   },
-
-  /* adds the locales to the internationalization module of the viewer */
-  addLocalesToViewer: function(){
-    for(let language in this.locales){
-      i18next.addResources(
-        language, 'translation',
-        this.locales[language]
-      );
-    }
-  },
-
-  handleSetBounds: function() {
-    let _this = this;
-    this.osdOptions.osdBounds = this.osd.viewport.getBounds(true);
-    _this.eventEmitter.publish("imageBoundsUpdated", {
-      id: _this.windowId,
-        osdBounds: {
-          x: _this.osdOptions.osdBounds.x,
-          y: _this.osdOptions.osdBounds.y,
-          width: _this.osdOptions.osdBounds.width,
-          height: _this.osdOptions.osdBounds.height
-        }
-    });
-  },
-
-  // Overwrite of toggleFocus of Mirador.Window.prototype.toggleFocus to add authService ids & profiles for authChain
-  toggleFocus: function(focusState, imageMode) {
-    let _this = this;
-
-    this.viewType = focusState;
-    if (imageMode && jQuery.inArray(imageMode, this.imageModes) > -1) {
-      this.currentImageMode = imageMode;
-    }
-    //set other focusStates to false (toggle to display none)
-    jQuery.each(this.focusModules, function(focusKey, module) {
-      if (module && focusState !== focusKey) {
-        module.toggle(false);
-      }
-    });
-    this.focusModules[focusState].toggle(true);
-    this.updateManifestInfo();
-    this.updatePanelsAndOverlay(focusState);
-    this.updateSidePanel();
-    // _this.eventEmitter.publish('SET_CURRENT_CANVAS_ID.' + windowId);
-    _this.eventEmitter.publish("focusUpdated");
-    _this.eventEmitter.publish("windowUpdated", {
-      id: _this.id,
-      viewType: _this.viewType,
-      canvasID: _this.canvasID,
-      imageMode: _this.currentImageMode,
-      loadedManifest: _this.manifest.jsonLd['@id'],
-      slotAddress: _this.slotAddress,
-      authService: _this.imagesList[Mirador.getImageIndexById(_this.imagesList, _this.canvasID)].images[0].resource.service,
-      authServiceID: _this.imagesList[Mirador.getImageIndexById(_this.imagesList, _this.canvasID)].images[0].resource.service['@id'],
-      authServiceProfile: _this.imagesList[Mirador.getImageIndexById(_this.imagesList, _this.canvasID)].images[0].resource.service.profile
-    });
-  }
 }
 
 $(document).ready(function(){
