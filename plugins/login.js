@@ -84,7 +84,11 @@ let Login = {
         function openContentProviderWindow(service){
           let cookieServiceUrl = service["@id"] + "?origin=" + getOrigin();
           console.log("Opening content provider window: " + cookieServiceUrl);
-          return window.open(cookieServiceUrl);
+          if (!window.open(cookieServiceUrl)) {
+            alert('Cookie failed to open, please allow pop-ups to generate cookie');
+          } else {
+            return;
+          }
         }
 
         function userInteractionWithContentProvider(contentProviderWindow){
@@ -325,7 +329,11 @@ $(document).ready(function(){
   function openContentProviderWindow(service){
     let cookieServiceUrl = service + "?origin=" + getOrigin();
     console.log("Opening content provider window: " + cookieServiceUrl);
-    return window.open(cookieServiceUrl);
+    if (!window.open(cookieServiceUrl)) {
+      alert('Cookie failed to open, please allow pop-ups to generate cookie');
+    } else {
+      return;
+    }
   }
   function getOrigin(url) {
     let urlHolder = window.location;
