@@ -23,6 +23,7 @@
 
         // initialize the application
         this.viewer = new Mirador.Viewer({
+            'authz': config.authz,
             'state': this.saveController,
             'eventEmitter': this.eventEmitter
         });

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Manifest Viewer</title>
+    <style type="text/css">
+     .wrapper, .control {
+       margin: 2em 1em;
+     }
+
+     input {
+       width: 90%;
+       font-size: 1em;
+       padding: 1em;
+     }
+
+     iframe {
+       border: none;
+     }
+
+     #zenmode {
+       width: 100%;
+       height: 100%;
+       min-height: 40em;
+     }
+    </style>
+  </head>
+  <body>
+    <div class="control">
+      <input id="manifestInput"
+         type="text"
+         autocomplete="off"
+         name="manifestUri"
+         placeholder="Enter manifest URL and press Return"/>
+    </div>
+
+    <div class="wrapper">
+      <iframe id="zenmode" title="Mirador" src=""
+        allowfullscreen="true"
+        webkitallowfullscreen="true"
+        mozallowfullscreen="true">
+      </iframe>
+    </div>
+
+    <!-- mirador.js will bring in URI.js -->
+    <script src="build/mirador/mirador.js"></script>
+    <script type="text/javascript">
+    $(function() {
+
+      window.danaAuthz = function () {
+        return {
+          getAjaxHeaders () {
+            console.log('Sent with custom AJAX headers')
+            // Return emptpy object should fix any CORS issue but will use the degraded images
+            return {
+              // "Authorization": 'Bearer some-access-token'
+            }
+          }
+        }
+      }
+
+      window.danaSetMiradorInstance = function(mirador) {
+        // We can make use of the mirador instance
+        console.log('Mirador has been initialzed')
+      }
+
+      function loadManifest(url) {
+        var zen = './zen.html'
+        var uri = new URI(zen);
+        var data = uri.search({
+          manifestUri: url
+        });
+        var iframeSource = data.toString();
+        $('#zenmode')[0].src = iframeSource;
+      }
+
+      $('#manifestInput').change((evt) => {
+        loadManifest(evt.target.value)
+      });
+    });
+    </script>
+    <script src="//localhost:35729/livereload.js"></script>
+  </body>
+</html>

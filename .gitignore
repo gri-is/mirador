@@ -15,3 +15,4 @@ data/Harvard
 build/
 .idea/
 bower_components/
+dana-authz.html

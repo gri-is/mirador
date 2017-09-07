@@ -226,6 +226,8 @@ module.exports = function(grunt) {
           'images/*',
           'css/*.css',
           'css/less/**/*.less',
+          'zen.html',
+          'zendemo.html',
           'index.html'
         ],
         tasks: 'dev_build'
@@ -296,7 +298,8 @@ module.exports = function(grunt) {
   // ----------
   // Dev Build task.
   // Build, but skip the time-consuming and obscurantist minification and uglification.
-  grunt.registerTask('dev_build', [ 'clean:build', 'git-describe', 'lint', 'less', 'concat', 'copy']);
+  // grunt.registerTask('dev_build', [ 'clean:build', 'git-describe', 'lint', 'less', 'concat', 'copy']);
+  grunt.registerTask('dev_build', [ 'clean:build', 'git-describe', 'less', 'concat', 'copy']);
 
   // ----------
   // Package task.

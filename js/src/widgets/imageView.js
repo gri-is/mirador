@@ -693,7 +693,12 @@
         .attr('id', osdID)
         .appendTo(_this.element);
 
+      var ajaxHeaders = {};
+      if (_this.state.currentConfig.authz) {
+        ajaxHeaders = _this.state.currentConfig.authz.getAjaxHeaders();
+      }
       _this.osd = $.OpenSeadragon({
+        ajaxHeaders: ajaxHeaders,
         id: osdID,
         uniqueID: osdID,
         preserveViewport: true,

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="stylesheet" type="text/css" href="build/mirador/css/mirador-combined.css">
+    <title>Mirador Viewer</title>
+    <style type="text/css">
+     #viewer {
+       width: 100%;
+       height: 100%;
+       position: fixed;
+     }
+    </style>
+  </head>
+  <body>
+    <div id="viewer"></div>
+
+    <script src="build/mirador/mirador.js"></script>
+
+    <!--we use ssi so we don't need Node build system on the server-->
+    <!--dana.authz.html should be injected during deployment by ansible -->
+    <!--# include file="dana-authz.html" -->
+
+    <script type="text/javascript">
+    $(function() {
+      var uri = new URI(window.location);
+      var data = uri.search(true);
+
+      var authz;
+      if (window.danaAuthz) {
+        // We use the server-side iclude for the production or qa
+        authz = window.danaAuthz()
+      } else if (window.parent && window.parent.danaAuthz) {
+        // We use the iframe owner
+        authz = window.parent.danaAuthz()
+      } else {
+        authz = {
+          "getAjaxHeaders": function() {
+            return {} // Dummy Authz
+          }
+        }
+      }
+
+      var danaMirador = Mirador({
+        "authz": authz,
+        "id": "viewer",
+        "layout": "1x1",
+        "mainMenuSettings" : {
+          'show' : false
+        },
+        "data": [
+          { "manifestUri": data.manifestUri },
+        ],
+        "windowObjects": [
+          {
+            "loadedManifest" : data.manifestUri,
+            "canvasID" : data.canvasId,
+            "viewType" : "ImageView",
+            "displayLayout": false,
+            "bottomPanel" : false,
+            "sidePanel" : false
+          }
+        ],
+        "annotationEndpoint": { "name":"Local Storage", "module": "LocalStorageEndpoint" },
+      });
+
+      if (window.parent && window.parent.danaSetMiradorInstance) {
+        window.parent.danaSetMiradorInstance(danaMirador);
+      }
+    });
+    </script>
+  </body>
+</html>
